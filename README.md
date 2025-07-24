@@ -58,7 +58,7 @@ The example client configs can work with Claude Desktop or a local Ollama LLM vi
         "args": [
           "run",
           "--directory",
-          "/Users/robmartin/Documents/Scratch/CVP-MCP",
+          "<path_to_project_directory>",
           "./cloudvision_mcp.py"
         ]
       }

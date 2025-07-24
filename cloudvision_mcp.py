@@ -4,6 +4,8 @@ from arista.inventory.v1 import models
 from arista.inventory.v1 import services
 from mcp.server.fastmcp import FastMCP
 from typing import TypedDict
+from cvp_mcp.grpc.inventory import get_all_inventory
+from cvp_mcp.grpc.models import SwitchInfo
 import argparse
 import grpc
 import json
@@ -25,21 +27,6 @@ mcp = FastMCP(
     stateless_http = True
 )
 
-RPC_TIMEOUT = 30  # in second
-EOS_PLATFORMS = ["DCS-", "CCS-", "AWE-"]
-EOS_VIRTUAL = ["cEOS", "vEOS"]
-
-class SwitchInfo(TypedDict):
-    hostname: str
-    model: str
-    serial_number: str
-    system_mac: str
-    version: str
-    streaming_status: str
-    device_type: str
-    hardware_revision: str
-    fqdn: str
-    domain_name: str
 
 #async function to return creds
 def get_env_vars():
@@ -51,17 +38,6 @@ def get_env_vars():
     datadict["cert"] = "./cert.pem"
     return datadict
 
-def createConnection():
-    datadict = get_env_vars()
-    # create the header object for the token
-    callCreds = grpc.access_token_call_credentials(datadict['cvtoken'])
-
-    with open(datadict["cert"], "rb") as f:
-        cert = f.read()
-    channelCreds = grpc.ssl_channel_credentials(root_certificates=cert)
-
-    connCreds = grpc.composite_channel_credentials(channelCreds, callCreds)
-    return(connCreds)
 
 @mcp.tool()
 def get_all() -> str:
@@ -70,60 +46,12 @@ def get_all() -> str:
     Optionally filters based on the only_active and only_inactive arguments.
     When filtering, only_active takes priority to only_inactive if both are set.
     """
-    logging.info("CVP Get all Tool")
     datadict = get_env_vars()
-    connCreds = createConnection()
-    all_devices = []
-    with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
-        # create the Python stub for the inventory API
-        # this is essentially the client, but Python gRPC refers to them as "stubs"
-        # because they call into the gRPC C API
-        stub = services.DeviceServiceStub(channel)
-
-        get_all_req = services.DeviceStreamRequest()
-        # Add filters to only get Active and Inactive streaming devices
-        get_all_req.partial_eq_filter.append(models.Device(
-            streaming_status=models.STREAMING_STATUS_INACTIVE,
-        ))
-        get_all_req.partial_eq_filter.append(models.Device(
-            streaming_status=models.STREAMING_STATUS_ACTIVE,
-        ))
-
-        for device in stub.GetAll(get_all_req, timeout=RPC_TIMEOUT):
-            try:
-                # Check to make sure the device has a valid System MAC
-                if device.value.system_mac_address.value:
-                    match device.value.streaming_status:
-                        case models.STREAMING_STATUS_INACTIVE:
-                            streaming_status = "Inactive"
-                        case models.STREAMING_STATUS_ACTIVE:
-                            streaming_status = "Active"
-                        case _:
-                            streaming_status = "Unknown"
-                    if any(x in device.value.model_name.value for x in EOS_PLATFORMS):
-                        device_type = "EOS"
-                    elif any(x in device.value.model_name.value for x in EOS_VIRTUAL):
-                        device_type = "Virtual EOS"
-                    elif "C-" in device.value.model_name.value:
-                        device_type = "Access Point"
-                    else:
-                        device_type = "Third Party"
-                    switch = SwitchInfo(
-                        hostname = device.value.hostname.value,
-                        model = device.value.model_name.value,
-                        serial_number = device.value.key.device_id.value,
-                        system_mac = device.value.system_mac_address.value,
-                        version = device.value.software_version.value,
-                        streaming_status = streaming_status,
-                        device_type = device_type,
-                        hardware_revision = device.value.hardware_revision.value,
-                        fqdn = device.value.fqdn.value,
-                        domain_name = device.value.domain_name.value
-                    )
-                    all_devices.append(switch)
-            except Exception as e:
-                logging.info(f"Error with device: {e}")
-        return(json.dumps(all_devices))
+    logging.info("CVP Get all Tool")
+    all_devices = get_all_inventory(datadict)
+    logging.info(json.dumps(all_devices))    
+    return(json.dumps(all_devices, indent=2))
+    # return(all_devices)
 
 def main(args):
     """Entry point for the direct execution server."""
