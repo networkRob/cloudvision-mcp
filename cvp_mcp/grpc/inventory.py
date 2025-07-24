@@ -1,7 +1,6 @@
-#!/usr/bin/python3
-
 from arista.inventory.v1 import models
 from arista.inventory.v1 import services
+from .utils import createConnection
 from .models import SwitchInfo
 import grpc
 import logging
@@ -13,20 +12,6 @@ import json
 RPC_TIMEOUT = 30  # in second
 EOS_PLATFORMS = ["DCS-", "CCS-", "AWE-"]
 EOS_VIRTUAL = ["cEOS", "vEOS"]
-
-
-
-def createConnection(datadict):
-    # datadict = get_env_vars()
-    # create the header object for the token
-    callCreds = grpc.access_token_call_credentials(datadict['cvtoken'])
-
-    with open(datadict["cert"], "rb") as f:
-        cert = f.read()
-    channelCreds = grpc.ssl_channel_credentials(root_certificates=cert)
-
-    connCreds = grpc.composite_channel_credentials(channelCreds, callCreds)
-    return(connCreds)
 
 def get_all_inventory(datadict):
     """

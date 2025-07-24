@@ -5,7 +5,8 @@ from arista.inventory.v1 import services
 from mcp.server.fastmcp import FastMCP
 from typing import TypedDict
 from cvp_mcp.grpc.inventory import get_all_inventory
-from cvp_mcp.grpc.models import SwitchInfo
+from cvp_mcp.grpc.bugs import get_all_bug_exposure
+from cvp_mcp.grpc.models import SwitchInfo, BugExposure
 import argparse
 import grpc
 import json
@@ -40,7 +41,7 @@ def get_env_vars():
 
 
 @mcp.tool()
-def get_all() -> str:
+def get_all_inventory() -> str:
     """
     Prints the hostname of all devices known to the system.
     Optionally filters based on the only_active and only_inactive arguments.
@@ -52,6 +53,17 @@ def get_all() -> str:
     logging.info(json.dumps(all_devices))    
     return(json.dumps(all_devices, indent=2))
     # return(all_devices)
+
+@mcp.tool()
+def get_all_bugs() -> str:
+    """
+    Prints out all bug exposures
+    """
+    datadict = get_env_vars()
+    logging.info("CVP Get all Bugs Tool")
+    all_bugs = get_all_bug_exposure(datadict)
+    logging.info(json.dumps(all_bugs))    
+    return(json.dumps(all_bugs, indent=2))
 
 def main(args):
     """Entry point for the direct execution server."""

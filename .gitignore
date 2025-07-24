@@ -3,5 +3,6 @@ cvp-mcp.env
 uv.lock
 .venv/
 cvp_mcp.egg-info
+__pycache__
 */__pycache__
 */*/__pycache__
