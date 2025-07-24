@@ -13,7 +13,7 @@ RPC_TIMEOUT = 30  # in second
 EOS_PLATFORMS = ["DCS-", "CCS-", "AWE-"]
 EOS_VIRTUAL = ["cEOS", "vEOS"]
 
-def get_all_inventory(datadict):
+def grpc_all_inventory(datadict):
     """
     Prints the hostname of all devices known to the system.
     Optionally filters based on the only_active and only_inactive arguments.

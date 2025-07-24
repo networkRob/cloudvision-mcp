@@ -4,8 +4,8 @@ from arista.inventory.v1 import models
 from arista.inventory.v1 import services
 from mcp.server.fastmcp import FastMCP
 from typing import TypedDict
-from cvp_mcp.grpc.inventory import get_all_inventory
-from cvp_mcp.grpc.bugs import get_all_bug_exposure
+from cvp_mcp.grpc.inventory import grpc_all_inventory
+from cvp_mcp.grpc.bugs import grpc_all_bug_exposure
 from cvp_mcp.grpc.models import SwitchInfo, BugExposure
 import argparse
 import grpc
@@ -13,6 +13,8 @@ import json
 import sys
 import logging
 import os
+
+CVP_TRANSPORT = "grpc"
 
 logging.basicConfig(
     level=logging.INFO,                # Minimum log level
@@ -49,7 +51,7 @@ def get_cvp_all_inventory() -> str:
     """
     datadict = get_env_vars()
     logging.info("CVP Get all Tool")
-    all_devices = get_all_inventory(datadict)
+    all_devices = grpc_all_inventory(datadict)
     logging.info(json.dumps(all_devices))    
     return(json.dumps(all_devices, indent=2))
     # return(all_devices)
@@ -61,7 +63,7 @@ def get_cvp_all_bugs() -> str:
     """
     datadict = get_env_vars()
     logging.info("CVP Get all Bugs Tool")
-    all_bugs = get_all_bug_exposure(datadict)
+    all_bugs = grpc_all_bug_exposure(datadict)
     logging.info(json.dumps(all_bugs))    
     return(json.dumps(all_bugs, indent=2))
 
@@ -70,6 +72,7 @@ def main(args):
     mcp_transport = args.transport
     mcp_port = args.port
     mcp_cvp = args.cvp
+    # global CVP_TRANSPORT = args.cvp
 
     logging.info(f"Starting MCP server via {mcp_transport}")
     logging.info(f"Server connection to CVP via {mcp_cvp}")

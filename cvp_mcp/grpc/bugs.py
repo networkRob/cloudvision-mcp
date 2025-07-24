@@ -1,11 +1,12 @@
 from arista.bugexposure.v1 import models
 from arista.bugexposure.v1 import services
-from .utils import createConnection
+from .utils import createConnection, serialize_repeated_int32
 from .models import BugExposure
 import grpc
 import logging
 import os
 import json
+import sys
 
 
 
@@ -13,7 +14,7 @@ RPC_TIMEOUT = 30  # in second
 EOS_PLATFORMS = ["DCS-", "CCS-", "AWE-"]
 EOS_VIRTUAL = ["cEOS", "vEOS"]
 
-def get_all_bug_exposure(datadict):
+def grpc_all_bug_exposure(datadict):
     """
     Gets all bugs in CVP
     """
@@ -28,9 +29,8 @@ def get_all_bug_exposure(datadict):
         get_all_req = services.BugExposureStreamRequest()
 
         # print(json.dumps(stub.GetAll(get_all_req, timeout=RPC_TIMEOUT)))
-
+        # print(list(stub.GetAll(get_all_req, timeout=RPC_TIMEOUT)), file=sys.stderr)
         for bug in stub.GetAll(get_all_req, timeout=RPC_TIMEOUT):
-            logging.info(json.dumps(bug, indent=2))
             try:
                 # Check to make sure the device is valid
                 if bug.value.key.device_id != "127.0.0.1":
@@ -52,12 +52,17 @@ def get_all_bug_exposure(datadict):
                             highest_cve = "None"
                         case _:
                             highest_cve = "Unspecified"
+
+                    for id in bug.value.bug_ids.values:
+                        logging.info(type(id))
+                        ids = int(id)
+                        logging.info(ids)
                     bug_exposure = BugExposure(
                         serial_number = bug.value.key.device_id.value,
-                        bug_ids = bug.value.bug_ids,
-                        cve_ids = bug.value.cve_ids,
-                        bug_count = bug.value.bug_count,
-                        cve_count = bug.value.cve_count,
+                        bug_ids = serialize_repeated_int32(bug.value.bug_ids.values),
+                        cve_ids = serialize_repeated_int32(bug.value.cve_ids.values),
+                        bug_count = bug.value.bug_count.value,
+                        cve_count = bug.value.cve_count.value,
                         highest_cve_exposure = highest_cve,
                         highest_bug_exposre = highest_bug
                     )
