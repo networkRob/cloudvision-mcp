@@ -27,7 +27,7 @@ def get_all_bug_exposure(datadict):
 
         get_all_req = services.BugExposureStreamRequest()
 
-        print(json.dumps(stub.GetAll(get_all_req, timeout=RPC_TIMEOUT)))
+        # print(json.dumps(stub.GetAll(get_all_req, timeout=RPC_TIMEOUT)))
 
         for bug in stub.GetAll(get_all_req, timeout=RPC_TIMEOUT):
             logging.info(json.dumps(bug, indent=2))

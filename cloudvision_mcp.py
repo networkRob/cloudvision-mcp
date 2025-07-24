@@ -41,7 +41,7 @@ def get_env_vars():
 
 
 @mcp.tool()
-def get_all_inventory() -> str:
+def get_cvp_all_inventory() -> str:
     """
     Prints the hostname of all devices known to the system.
     Optionally filters based on the only_active and only_inactive arguments.
@@ -55,7 +55,7 @@ def get_all_inventory() -> str:
     # return(all_devices)
 
 @mcp.tool()
-def get_all_bugs() -> str:
+def get_cvp_all_bugs() -> str:
     """
     Prints out all bug exposures
     """
