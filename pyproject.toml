@@ -1,0 +1,12 @@
+[project]
+name = "cvp_mcp"
+version = "0.1.0"
+description = "CloudVision MCP Server"
+dependencies = [
+    "cloudvision",
+    "grpcio",
+    "mcp[cli]"
+]
+
+
+
