@@ -8,5 +8,10 @@ dependencies = [
     "mcp[cli]"
 ]
 
+[tool.uv.workspace]
+members = [
+    "cvp-mcp",
+]
+
 
 
