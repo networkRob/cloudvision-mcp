@@ -27,7 +27,7 @@ Populate an env-file, sample below.
 
 Run
 ```
-  podman run -d --name cvp-mcp cloudvision-mcp:latest
+  podman run -d --name cvp-mcp --env-file cvp-mcp.env cloudvision-mcp:latest
 ```
 
 The server will be running by default with Streamable HTTP on port 8000
