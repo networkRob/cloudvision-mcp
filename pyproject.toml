@@ -5,6 +5,7 @@ description = "CloudVision MCP Server"
 dependencies = [
     "cloudvision",
     "grpcio",
+    "protobuf",
     "mcp[cli]"
 ]
 

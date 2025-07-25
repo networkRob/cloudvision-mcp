@@ -54,9 +54,7 @@ def grpc_all_bug_exposure(datadict):
                             highest_cve = "Unspecified"
 
                     for id in bug.value.bug_ids.values:
-                        logging.info(type(id))
                         ids = int(id)
-                        logging.info(ids)
                     bug_exposure = BugExposure(
                         serial_number = bug.value.key.device_id.value,
                         bug_ids = serialize_repeated_int32(bug.value.bug_ids.values),
@@ -68,6 +66,6 @@ def grpc_all_bug_exposure(datadict):
                     )
                     all_bugs.append(bug_exposure)
             except Exception as e:
-                logging.info(f"Error with device: {e}")
+                logging.error(f"Error with device: {e}")
         return(all_bugs)
         # return(json.dumps(all_devices))

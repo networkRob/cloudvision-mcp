@@ -1,6 +1,7 @@
 from arista.inventory.v1 import models
 from arista.inventory.v1 import services
-from .utils import createConnection
+from google.protobuf import wrappers_pb2 as wrappers
+from .utils import createConnection, convert_response_to_switch
 from .models import SwitchInfo
 import grpc
 import logging
@@ -41,35 +42,30 @@ def grpc_all_inventory(datadict):
             try:
                 # Check to make sure the device has a valid System MAC
                 if device.value.system_mac_address.value:
-                    match device.value.streaming_status:
-                        case models.STREAMING_STATUS_INACTIVE:
-                            streaming_status = "Inactive"
-                        case models.STREAMING_STATUS_ACTIVE:
-                            streaming_status = "Active"
-                        case _:
-                            streaming_status = "Unknown"
-                    if any(x in device.value.model_name.value for x in EOS_PLATFORMS):
-                        device_type = "EOS"
-                    elif any(x in device.value.model_name.value for x in EOS_VIRTUAL):
-                        device_type = "Virtual EOS"
-                    elif "C-" in device.value.model_name.value:
-                        device_type = "Access Point"
-                    else:
-                        device_type = "Third Party"
-                    switch = SwitchInfo(
-                        hostname = device.value.hostname.value,
-                        model = device.value.model_name.value,
-                        serial_number = device.value.key.device_id.value,
-                        system_mac = device.value.system_mac_address.value,
-                        version = device.value.software_version.value,
-                        streaming_status = streaming_status,
-                        device_type = device_type,
-                        hardware_revision = device.value.hardware_revision.value,
-                        fqdn = device.value.fqdn.value,
-                        domain_name = device.value.domain_name.value
-                    )
+                    switch = convert_response_to_switch(device)
                     all_devices.append(switch)
             except Exception as e:
-                logging.info(f"Error with device: {e}")
+                logging.error(f"Error with device: {e}")
         return(all_devices)
         # return(json.dumps(all_devices))
+
+def grpc_one_inventory_serial(datadict, device_id):
+    """
+    Function to get details of one device from CloudVision
+    """
+    logging.info("Get one device from CVP by serial number")
+    connCreds = createConnection(datadict)
+    device = ""
+    with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
+        stub = services.DeviceServiceStub(channel)
+        try:
+            req = services.DeviceRequest(
+                key={"device_id": wrappers.StringValue(value=device_id)}
+            )
+        except Exception as e:
+            logging.error(e)
+        device = stub.GetOne(req)
+        converted_device = convert_response_to_switch(device)
+        logging.debug(json.dumps(converted_device ))
+        return(converted_device )
+
