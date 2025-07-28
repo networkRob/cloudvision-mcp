@@ -64,8 +64,11 @@ def grpc_one_inventory_serial(datadict, device_id):
             )
         except Exception as e:
             logging.error(e)
-        device = stub.GetOne(req)
-        converted_device = convert_response_to_switch(device)
-        logging.debug(json.dumps(converted_device ))
-        return(converted_device )
+        try:
+            device = stub.GetOne(req)
+            converted_device = convert_response_to_switch(device)
+            logging.debug(json.dumps(converted_device ))
+            return(converted_device )
+        except:
+            return(SwitchInfo())
 

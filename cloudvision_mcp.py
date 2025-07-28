@@ -83,6 +83,7 @@ def get_cvp_all_bugs() -> str:
     """
     Prints out all bug exposures
     """
+    bugs = []
     datadict = get_env_vars()
     logging.info("CVP Get all Bugs Tool")
     match CVP_TRANSPORT:
@@ -92,7 +93,15 @@ def get_cvp_all_bugs() -> str:
             logging.info("HTTP Transport to get all bugs")
             all_bugs = ""
     logging.debug(json.dumps(all_bugs))    
-    return(json.dumps(all_bugs, indent=2))
+    if all_bugs:
+        for bug in all_bugs:
+            logging.debug(f"Serial Number: {bug["serial_number"]}")
+            device = grpc_one_inventory_serial(datadict, bug["serial_number"])
+            if device:
+                bug["hostname"] = device["hostname"]
+                bugs.append(bug)
+    logging.debug(json.dumps(bugs))
+    return(json.dumps(bugs, indent=2))
 
 def main(args):
     """Entry point for the direct execution server."""
