@@ -6,8 +6,10 @@ from mcp.server.fastmcp import FastMCP
 from typing import TypedDict
 from cvp_mcp.grpc.inventory import grpc_all_inventory, grpc_one_inventory_serial
 from cvp_mcp.grpc.bugs import grpc_all_bug_exposure
+from cvp_mcp.grpc.monitor import grpc_all_probe_status
 from cvp_mcp.grpc.models import SwitchInfo, BugExposure
 from cvp_mcp.grpc.connector import conn_get_info_bugs
+from cvp_mcp.grpc.utils import createConnection
 import argparse
 import grpc
 import json
@@ -42,6 +44,10 @@ def get_env_vars():
     datadict["cert"] = "./cert.pem"
     return datadict
 
+# ===================================================
+# Inventory Based Tools
+# ===================================================
+
 @mcp.tool()
 def get_cvp_one_device(device_id) -> str:
     """
@@ -52,7 +58,9 @@ def get_cvp_one_device(device_id) -> str:
     try:
         match CVP_TRANSPORT:
             case "grpc":
-                device = grpc_one_inventory_serial(datadict, device_id)
+                connCreds = createConnection(datadict)
+                with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
+                    device = grpc_one_inventory_serial(channel, device_id)
             case "http":
                 device = ""
     except Exception as e:
@@ -71,13 +79,19 @@ def get_cvp_all_inventory() -> str:
     logging.info("CVP Get all Tool")
     match CVP_TRANSPORT:
         case "grpc":
-            all_devices = grpc_all_inventory(datadict)
+            connCreds = createConnection(datadict)
+            with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
+                all_devices = grpc_all_inventory(channel)
         case "http":
             logging.info("CVP HTTP Request for all devices")
             all_devices = ""
     logging.debug(json.dumps(all_devices))    
     return(json.dumps(all_devices, indent=2))
     # return(all_devices)
+
+# ===================================================
+# Bug Based Tools
+# ===================================================
 
 @mcp.tool()
 def get_cvp_all_bugs() -> str:
@@ -92,19 +106,21 @@ def get_cvp_all_bugs() -> str:
     logging.info("CVP Get all Bugs Tool")
     match CVP_TRANSPORT:
         case "grpc":
-            all_bugs = grpc_all_bug_exposure(datadict)
+            connCreds = createConnection(datadict)
+            with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
+                all_bugs = grpc_all_bug_exposure(channel)
+                if all_bugs:
+                    for bug in all_bugs:
+                        for id in bug["bug_ids"]:
+                            if id not in all_bug_ids:
+                                all_bug_ids.append(id)
+                        device = grpc_one_inventory_serial(channel, bug["serial_number"])
+                        if device:
+                            all_devices.append(device)
         case "http":
             logging.info("HTTP Transport to get all bugs")
             all_bugs = ""
     logging.debug(json.dumps(all_bugs))    
-    if all_bugs:
-        for bug in all_bugs:
-            for id in bug["bug_ids"]:
-                if id not in all_bug_ids:
-                    all_bug_ids.append(id)
-            device = grpc_one_inventory_serial(datadict, bug["serial_number"])
-            if device:
-                all_devices.append(device)
     # Grab information about each bug
     all_bug_info = conn_get_info_bugs(datadict, all_bug_ids)
     all_data["bug_info"] = all_bug_info
@@ -116,6 +132,30 @@ def get_cvp_all_bugs() -> str:
     except Exception as y:
         logging.error(y)
     return(json.dumps(all_data, indent=2))
+
+
+# ===================================================
+# Commectivty Monitor Based Tools
+# ===================================================
+
+@mcp.tool()
+def get_cvp_all_connectivity_probes() -> str:
+    """
+    Gets all connectivity monitor probes from CVP
+    Displays latency, jitter, http response time and packet loss
+    """
+    datadict = get_env_vars()
+    logging.info("CVP Get all Probes")
+    match CVP_TRANSPORT:
+        case "grpc":
+            connCreds = createConnection(datadict)
+            with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
+                all_probes= grpc_all_probe_status(channel)
+        case "http":
+            logging.info("CVP HTTP Request for all devices")
+            all_devices = ""
+    logging.debug(json.dumps(all_probes))    
+    return(json.dumps(all_probes, indent=2))
 
 def main(args):
     """Entry point for the direct execution server."""

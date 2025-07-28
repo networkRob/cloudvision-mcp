@@ -1,7 +1,8 @@
 import grpc
-from .models import SwitchInfo
+from .models import SwitchInfo, ProbeStats
 from arista.inventory.v1 import models
 
+RPC_TIMEOUT = 30
 EOS_PLATFORMS = ["DCS-", "CCS-", "AWE-"]
 EOS_VIRTUAL = ["cEOS", "vEOS"]
 
@@ -55,3 +56,17 @@ def convert_response_to_switch(device) -> SwitchInfo:
     else:
         switch = SwitchInfo()
     return(switch)
+
+def convert_response_to_probe_stat(probe) -> ProbeStats:
+    _probe = ProbeStats(
+        serial_number = probe.value.key.device_id.value,
+        host = probe.value.key.host.value,
+        vrf = probe.value.key.vrf.value,
+        source_intf = probe.value.key.source_intf.value,
+        latency_millis = probe.value.latency_millis.value,
+        jitter_millis = probe.value.jitter_millis.value,
+        http_response_time_millis = probe.value.http_response_time_millis.value,
+        packet_loss_percent = probe.value.packet_loss_percent.value,
+        error = probe.value.error.value
+    )
+    return _probe
