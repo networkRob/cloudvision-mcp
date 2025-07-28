@@ -7,6 +7,7 @@ from typing import TypedDict
 from cvp_mcp.grpc.inventory import grpc_all_inventory, grpc_one_inventory_serial
 from cvp_mcp.grpc.bugs import grpc_all_bug_exposure
 from cvp_mcp.grpc.models import SwitchInfo, BugExposure
+from cvp_mcp.grpc.connector import conn_get_info_bugs
 import argparse
 import grpc
 import json
@@ -85,6 +86,8 @@ def get_cvp_all_bugs() -> str:
     """
     all_data = {}
     all_devices = []
+    all_bug_ids = []
+    # all_bug_info = {}
     datadict = get_env_vars()
     logging.info("CVP Get all Bugs Tool")
     match CVP_TRANSPORT:
@@ -96,13 +99,22 @@ def get_cvp_all_bugs() -> str:
     logging.debug(json.dumps(all_bugs))    
     if all_bugs:
         for bug in all_bugs:
-            logging.debug(f"Serial Number: {bug["serial_number"]}")
+            for id in bug["bug_ids"]:
+                if id not in all_bug_ids:
+                    all_bug_ids.append(id)
             device = grpc_one_inventory_serial(datadict, bug["serial_number"])
             if device:
                 all_devices.append(device)
+    # Grab information about each bug
+    all_bug_info = conn_get_info_bugs(datadict, all_bug_ids)
+    all_data["bug_info"] = all_bug_info
     all_data['bugs'] = all_bugs
     all_data['devices'] = all_devices
-    logging.debug(json.dumps(all_data))
+    try:
+        logging.debug(f"Bug Data: {type(all_data['bug_info'])} {all_data['bug_info']}")
+        logging.debug(f"All data: {json.dumps(all_data)}")
+    except Exception as y:
+        logging.error(y)
     return(json.dumps(all_data, indent=2))
 
 def main(args):
