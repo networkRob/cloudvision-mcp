@@ -7,14 +7,14 @@ This MCP server can be used to query and interact with Arista CloudVision.
 To run, you can the server via `uv`. Make sure you load your environment variables for `CVP` and `CVPTOKEN` prior to running.
 
 ```
-  uv run cloudvision_mcp.py
+  uv run --env-file cvp-mcp.env cloudvision_mcp.py
 ```
 
 ### Alternate Method
 
 To run in a container, build the image first.
 ```
-  podman build -t cloudvision_mcp:latest
+  podman build -t cloudvision_mcp:latest .
 ```
 
 Populate an env-file, sample below.
@@ -27,7 +27,7 @@ Populate an env-file, sample below.
 
 Run
 ```
-  podman run -d --name cvp-mcp --env-file cvp-mcp.env cloudvision-mcp:latest
+  podman run -d --name cvp-mcp -p 8000:8000 --env-file cvp-mcp.env cloudvision-mcp:latest
 ```
 
 The server will be running by default with Streamable HTTP on port 8000
@@ -40,6 +40,7 @@ The server can be configured with the following flags
 | -t | MCP Transport {"http", "stdio"} |
 | -p | MCP Port for Streamable HTTP (default=8000) |
 | -c | CVP Connection protocol {"grcp", "http"} (default=grpc) |
+| -d | Enable debug logging |
 
 ### **Note**
 
