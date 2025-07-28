@@ -83,7 +83,8 @@ def get_cvp_all_bugs() -> str:
     """
     Prints out all bug exposures
     """
-    bugs = []
+    all_data = {}
+    all_devices = []
     datadict = get_env_vars()
     logging.info("CVP Get all Bugs Tool")
     match CVP_TRANSPORT:
@@ -98,10 +99,11 @@ def get_cvp_all_bugs() -> str:
             logging.debug(f"Serial Number: {bug["serial_number"]}")
             device = grpc_one_inventory_serial(datadict, bug["serial_number"])
             if device:
-                bug["hostname"] = device["hostname"]
-                bugs.append(bug)
-    logging.debug(json.dumps(bugs))
-    return(json.dumps(bugs, indent=2))
+                all_devices.append(device)
+    all_data['bugs'] = all_bugs
+    all_data['devices'] = all_devices
+    logging.debug(json.dumps(all_data))
+    return(json.dumps(all_data, indent=2))
 
 def main(args):
     """Entry point for the direct execution server."""
@@ -117,6 +119,10 @@ def main(args):
 
     logging.info(f"Starting MCP server via {mcp_transport}")
     logging.info(f"Server connection to CVP via {mcp_cvp}")
+    # Adding check as HTTP connection to CVP is currently not supported
+    if mcp_cvp == "http":
+        logging.warning("HTTP connections to CVP are currently not supported")
+        sys.exit(1)
     if mcp_transport == "http":
         mcp.settings.port = mcp_port
         logging.info(f"Streamable HTTP Server listening on port {mcp_port}")

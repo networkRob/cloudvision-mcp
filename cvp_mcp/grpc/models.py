@@ -14,7 +14,6 @@ class SwitchInfo(TypedDict):
 
 class BugExposure(TypedDict):
     serial_number: str
-    hostname: str
     bug_ids: list[int]
     cve_ids: list[int]
     bug_count: int
