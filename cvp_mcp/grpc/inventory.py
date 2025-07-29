@@ -15,7 +15,8 @@ def grpc_all_inventory(channel):
     When filtering, only_active takes priority to only_inactive if both are set.
     """
     logging.info("CVP Get all Tool")
-    all_devices = []
+    all_active = []
+    all_inactive = []
     # create the Python stub for the inventory API
     # this is essentially the client, but Python gRPC refers to them as "stubs"
     # because they call into the gRPC C API
@@ -33,10 +34,16 @@ def grpc_all_inventory(channel):
             # Check to make sure the device has a valid System MAC
             if device.value.system_mac_address.value:
                 switch = convert_response_to_switch(device)
-                all_devices.append(switch)
+                match switch["streaming_status"]:
+                    case "Active":
+                        logging.debug(f"Active: {switch['hostname']}")
+                        all_active.append(switch)
+                    case "Inactive":
+                        logging.debug(f"Inactive: {switch['hostname']}")
+                        all_inactive.append(switch)
         except Exception as e:
             logging.error(f"Error with device: {e}")
-    return(all_devices)
+    return(all_active, all_inactive)
     # return(json.dumps(all_devices))
 
 def grpc_one_inventory_serial(channel, device_id):

@@ -82,12 +82,15 @@ def get_cvp_all_inventory() -> str:
     FQDN, domain name, and model
     """
     datadict = get_env_vars()
+    all_devices = {}
     logging.info("CVP Get all Tool")
     match CVP_TRANSPORT:
         case "grpc":
             connCreds = createConnection(datadict)
             with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
-                all_devices = grpc_all_inventory(channel)
+                all_active, all_inactive = grpc_all_inventory(channel)
+                all_devices["streaming_active"] = all_active
+                all_devices["streaming_inactive"] = all_inactive
         case "http":
             logging.info("CVP HTTP Request for all devices")
             all_devices = ""
