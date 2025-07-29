@@ -72,7 +72,7 @@ The example client configs can work with Claude Desktop or a local Ollama LLM vi
   {
     "mcpServers": {
       "CVP MCP Server": {
-        "type": "streamable-http",
+        "type": "streamable_http",
         "url": "<mcp_server_address>:<port>/mcp"
       }
     }

@@ -3,7 +3,7 @@
 from arista.inventory.v1 import models
 from arista.inventory.v1 import services
 from mcp.server.fastmcp import FastMCP
-from typing import TypedDict
+from typing import TypedDict, Optional
 from cvp_mcp.grpc.inventory import grpc_all_inventory, grpc_one_inventory_serial
 from cvp_mcp.grpc.bugs import grpc_all_bug_exposure
 from cvp_mcp.grpc.monitor import grpc_all_probe_status, grpc_one_probe_status
@@ -167,25 +167,38 @@ def get_cvp_all_connectivity_probes() -> str:
     return(json.dumps(all_data, indent=2))
 
 @mcp.tool()
-def get_cvp_one_connectivity_probe(serial_number, endpoint, vrf, source_interface) -> str:
+def get_cvp_one_connectivity_probe(
+    serial_number: Optional[str] = None,
+    endpoint: Optional[str] = None,
+    vrf: Optional[str] = None,
+    source_interface: Optional[str] = None) -> str:
     """
     Prints out information about a single device in CVP
     Displays latency, jitter, http response time and packet loss
     """
     datadict = get_env_vars()
     logging.debug(f"CVP Get One Probe State")
+    all_data = {}
+    all_devices = {}
     try:
         match CVP_TRANSPORT:
             case "grpc":
                 connCreds = createConnection(datadict)
                 with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
-                    probe = grpc_one_probe_status(channel, serial_number, endpoint, vrf, source_interface)
+                    probes = grpc_one_probe_status(channel, serial_number, endpoint, vrf, source_interface)
+                    for _probe in probes:
+                        logging.debug(f"MON S/n: {_probe['serial_number']}")
+                        serial_number = _probe['serial_number']
+                        if serial_number  not in all_devices.keys():
+                            all_devices[serial_number]= grpc_one_inventory_serial(channel, serial_number)
+                    all_data['probes'] = probes
+                    all_data['devices'] = all_devices
             case "http":
                 device = ""
     except Exception as e:
         logging.error(e)
-    logging.debug(json.dumps(probe, indent=2))
-    return(json.dumps(probe, indent=2))
+    logging.debug(json.dumps(all_data, indent=2))
+    return(json.dumps(all_data, indent=2))
 
 
 def main(args):
