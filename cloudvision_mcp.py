@@ -53,6 +53,9 @@ def get_env_vars():
 def get_cvp_one_device(device_id) -> str:
     """
     Prints out information about a single device in CVP
+    For one switch it gets the serial number, system mac address,
+    hostname, EOS version, streaming status, device type, harware revision,
+    FQDN, domain name, and model
     """
     datadict = get_env_vars()
     logging.debug(f"CVP Get One Device Tool - {device_id}")
@@ -72,9 +75,10 @@ def get_cvp_one_device(device_id) -> str:
 @mcp.tool()
 def get_cvp_all_inventory() -> str:
     """
-    Prints the hostname of all devices known to the system.
-    Optionally filters based on the only_active and only_inactive arguments.
-    When filtering, only_active takes priority to only_inactive if both are set.
+    Grabs all switches and devices from CloudVision (CVP)
+    For all devices it gets the serial number, system mac address,
+    hostname, EOS version, streaming status, device type, harware revision,
+    FQDN, domain name, and model
     """
     datadict = get_env_vars()
     logging.info("CVP Get all Tool")
@@ -98,6 +102,8 @@ def get_cvp_all_inventory() -> str:
 def get_cvp_all_bugs() -> str:
     """
     Prints out all bug exposures
+    For each bug, it gets: device serial number, list of bug IDs,
+    list of CVE IDs, bug count, cve count and the highest exposure to bugs and CVEs
     """
     all_data = {}
     all_devices = []
