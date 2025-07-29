@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+
 class SwitchInfo(TypedDict):
     hostname: str
     model: str
@@ -32,3 +33,17 @@ class ProbeStats(TypedDict):
     packet_loss_percent: int
     error: str
     
+class DeviceSoftwareEoL(TypedDict):
+    version: str
+    end_of_support: str
+    
+class DeviceHardwareEoL(TypedDict):
+    end_of_life: str
+    end_of_sale: str
+    end_of_tac_support: str
+    end_of_hardware_rma_requests: str
+    
+class DeviceLifecycleSummary(TypedDict):
+    serial_number: str
+    software_eol: DeviceSoftwareEoL
+    hardware_lifecycle_summary: DeviceHardwareEoL

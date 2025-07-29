@@ -7,7 +7,8 @@ from typing import TypedDict, Optional
 from cvp_mcp.grpc.inventory import grpc_all_inventory, grpc_one_inventory_serial
 from cvp_mcp.grpc.bugs import grpc_all_bug_exposure
 from cvp_mcp.grpc.monitor import grpc_all_probe_status, grpc_one_probe_status
-from cvp_mcp.grpc.models import SwitchInfo, BugExposure
+from cvp_mcp.grpc.lifecycle import grpc_all_device_lifecycle
+from cvp_mcp.grpc.models import SwitchInfo, BugExposure, DeviceLifecycleSummary
 from cvp_mcp.grpc.connector import conn_get_info_bugs
 from cvp_mcp.grpc.utils import createConnection
 import argparse
@@ -200,6 +201,39 @@ def get_cvp_one_connectivity_probe(
     logging.debug(json.dumps(all_data, indent=2))
     return(json.dumps(all_data, indent=2))
 
+
+# ===================================================
+# Device Lifecycle Based Tools
+# ===================================================
+
+@mcp.tool()
+def get_cvp_all_device_lifecycle()-> str:
+    """
+    Gets all device lifecycle from CVP
+    Displays information about switch software end of life,
+    and hardware end of support, end of rma, end of sale and end of life.
+    """
+    datadict = get_env_vars()
+    all_devices = {}
+    all_data = {}
+    logging.info("CVP Get all Device Lifecycle")
+    match CVP_TRANSPORT:
+        case "grpc":
+            connCreds = createConnection(datadict)
+            with grpc.secure_channel(datadict["cvp"], connCreds) as channel:
+                all_lifecycle = grpc_all_device_lifecycle(channel)
+                # Gather information about the source switches for analytics
+                for _lifecycle in all_lifecycle:
+                    serial_number = _lifecycle['serial_number']
+                    if serial_number not in all_devices.keys():
+                        all_devices[serial_number] = grpc_one_inventory_serial(channel, serial_number)
+        case "http":
+            logging.info("CVP HTTP Request for all devices")
+            all_devices = ""
+    all_data['devices'] = all_devices
+    all_data['lifecycle'] = all_lifecycle
+    logging.debug(json.dumps(all_data))    
+    return(json.dumps(all_data, indent=2))
 
 def main(args):
     """Entry point for the direct execution server."""

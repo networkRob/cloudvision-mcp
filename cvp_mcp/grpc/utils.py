@@ -1,11 +1,39 @@
 import grpc
-from .models import SwitchInfo, ProbeStats
+from .models import SwitchInfo, ProbeStats,DeviceLifecycleSummary, DeviceHardwareEoL, DeviceSoftwareEoL
 from arista.inventory.v1 import models
+import logging
 
 RPC_TIMEOUT = 30
 EOS_PLATFORMS = ["DCS-", "CCS-", "AWE-"]
 EOS_VIRTUAL = ["cEOS", "vEOS"]
 
+def datetime_to_readable_format(dt, format_type="full"):
+    """
+    Convert datetime object to various readable formats.
+    
+    Args:
+        dt: datetime object
+        format_type: Type of format to return
+        
+    Returns:
+        str: Formatted date string
+    """
+    if dt is None:
+        return None
+    
+    formats = {
+        "full": "%B %d, %Y",           # April 25, 2028
+        "short": "%b %d, %Y",          # Apr 25, 2028
+        "with_day": "%A, %B %d, %Y",   # Friday, April 25, 2028
+        "numeric": "%m/%d/%Y",         # 04/25/2028
+        "iso_date": "%Y-%m-%d",        # 2028-04-25
+        "friendly": "%B %d, %Y at %I:%M %p",  # April 25, 2028 at 12:00 AM
+    }
+    
+    return dt.strftime(formats.get(format_type, formats["full"]))
+
+
+    
 def createConnection(datadict):
     # datadict = get_env_vars()
     # create the header object for the token
@@ -70,3 +98,36 @@ def convert_response_to_probe_stat(probe) -> ProbeStats:
         error = probe.value.error.value
     )
     return _probe
+
+def convert_response_to_device_lifecycle(device) -> DeviceLifecycleSummary:
+    try:
+        _sw = DeviceSoftwareEoL(
+            version = device.value.software_eol.version.value,
+            end_of_support = datetime_to_readable_format(device.value.software_eol.end_of_support.ToDatetime(), "with_day")
+        )
+    except:
+        _sw = DeviceSoftwareEoL(
+            version = "",
+            end_of_support = ""
+        )
+    logging.debug(f"SW: {_sw}")
+    try:
+        _hw = DeviceHardwareEoL(
+            end_of_life = datetime_to_readable_format(device.value.hardware_lifecycle_summary.end_of_life.ToDatetime(), "with_day"),
+            end_of_sale = datetime_to_readable_format(device.value.hardware_lifecycle_summary.end_of_sale.ToDatetime(), "with_day"),
+            end_of_tac_support = datetime_to_readable_format(device.value.hardware_lifecycle_summary.end_of_tag_support.ToDatetime(), "with_day"),
+            end_of_hardware_rma_request = datetime_to_readable_format(device.value.hardware_lifecycle_summary.end_of_hardware_rma_request.ToDatetime(), "with_day")
+        )
+    except:
+        _hw = DeviceHardwareEoL(
+            end_of_life = "",
+            end_of_sale = "",
+            end_of_tac_support = "",
+            end_of_hardware_rma_request = ""
+        )
+    _device = DeviceLifecycleSummary(
+        serial_number = device.value.key.device_id.value,
+        software_eol = _sw,
+        hardware_lifecycle_summary = _hw
+    )
+    return(_device)
