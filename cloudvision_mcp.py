@@ -211,7 +211,7 @@ def main(args):
         logging.info(f"Streamable HTTP Server listening on port {mcp_port}")
         mcp.run(transport="streamable-http")
     else:
-        mcp_run(transport="stdio")
+        mcp.run(transport="stdio")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
