@@ -74,7 +74,7 @@ def get_cvp_one_device(device_id) -> str:
     return(json.dumps(device, indent=2))
     
 @mcp.tool()
-def get_cvp_all_inventory() -> str:
+def get_cvp_all_inventory() -> dict:
     """
     Grabs all switches and devices from CloudVision (CVP)
     For all devices it gets the serial number, system mac address,
@@ -95,19 +95,23 @@ def get_cvp_all_inventory() -> str:
             logging.info("CVP HTTP Request for all devices")
             all_devices = ""
     logging.debug(json.dumps(all_devices))    
-    return(json.dumps(all_devices, indent=2))
-    # return(all_devices)
+    # return(json.dumps(all_devices, indent=2))
+    return(all_devices)
 
 # ===================================================
 # Bug Based Tools
 # ===================================================
 
 @mcp.tool()
-def get_cvp_all_bugs() -> str:
+def get_cvp_all_bugs() -> dict:
     """
     Prints out all bug exposures
     For each bug, it gets: device serial number, list of bug IDs,
-    list of CVE IDs, bug count, cve count and the highest exposure to bugs and CVEs
+    list of CVE IDs, bug count, cve count and the highest exposure to bugs and CVEs.
+    This will also get switches based on the found serial numbers in the bug report,
+    It will get  the serial number, system mac address,
+    hostname, EOS version, streaming status, device type, harware revision,
+    FQDN, domain name, and model
     """
     all_data = {}
     all_devices = []
@@ -142,7 +146,8 @@ def get_cvp_all_bugs() -> str:
         logging.debug(f"All data: {json.dumps(all_data)}")
     except Exception as y:
         logging.error(y)
-    return(json.dumps(all_data, indent=2))
+    # return(json.dumps(all_data, indent=2))
+    return(all_data)
 
 
 # ===================================================
@@ -150,7 +155,7 @@ def get_cvp_all_bugs() -> str:
 # ===================================================
 
 @mcp.tool()
-def get_cvp_all_connectivity_probes() -> str:
+def get_cvp_all_connectivity_probes() -> dict:
     """
     Gets all connectivity monitor probes from CVP
     Displays latency, jitter, http response time and packet loss
@@ -175,7 +180,8 @@ def get_cvp_all_connectivity_probes() -> str:
     all_data['devices'] = all_devices
     all_data['probes'] = all_probes
     logging.debug(json.dumps(all_data))    
-    return(json.dumps(all_data, indent=2))
+    # return(json.dumps(all_data, indent=2))
+    return(all_data)
 
 @mcp.tool()
 def get_cvp_one_connectivity_probe(
@@ -217,7 +223,7 @@ def get_cvp_one_connectivity_probe(
 # ===================================================
 
 @mcp.tool()
-def get_cvp_all_device_lifecycle()-> str:
+def get_cvp_all_device_lifecycle()-> dict:
     """
     Gets all device lifecycle from CVP
     Displays information about switch software end of life,
@@ -243,7 +249,8 @@ def get_cvp_all_device_lifecycle()-> str:
     all_data['devices'] = all_devices
     all_data['lifecycle'] = all_lifecycle
     logging.debug(json.dumps(all_data))    
-    return(json.dumps(all_data, indent=2))
+    # return(json.dumps(all_data, indent=2))
+    return(all_data)
 
 def main(args):
     """Entry point for the direct execution server."""
