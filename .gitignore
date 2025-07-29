@@ -6,3 +6,4 @@ cvp_mcp.egg-info
 __pycache__
 */__pycache__
 */*/__pycache__
+cvaas-mcp.env

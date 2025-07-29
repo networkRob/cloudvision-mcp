@@ -23,7 +23,9 @@ Populate an env-file, sample below.
 ```
   CVP=<cvp_server_address>
   CVPTOKEN=<service_account_api_token>
+  CERT=<cert_file_name>
 ```
+**Note** The Cert file is only necessary if you are connecting to an on-prem CVP instance with self-signed certs
 
 Run
 ```

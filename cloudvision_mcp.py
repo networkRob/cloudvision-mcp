@@ -39,10 +39,11 @@ mcp = FastMCP(
 def get_env_vars():
     cvp = os.environ.get("CVP")
     cvtoken = os.environ.get("CVPTOKEN")
+    certfile = os.environ.get("CERT")
     datadict = {}
     datadict['cvtoken'] = cvtoken
     datadict["cvp"] = cvp
-    datadict["cert"] = "./cert.pem"
+    datadict["cert"] = certfile
     return datadict
 
 # ===================================================
