@@ -149,6 +149,9 @@ def convert_response_to_endpoint_location(endpoint) -> EndpointLocation:
         #     #     device_status = _location.device_status.enum_type.values_by_number[_device_enum].name
         #     # )
         #     all_locations.append(location)
+    hostname = ""
+    mac_addres = ""
+    ip_address = ""
     if endpoint.identifier_list:
         for _endpoint in endpoint.identifier_list.values:
             match _endpoint.type:
