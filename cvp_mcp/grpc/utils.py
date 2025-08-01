@@ -1,6 +1,7 @@
 import grpc
-from .models import SwitchInfo, ProbeStats,DeviceLifecycleSummary, DeviceHardwareEoL, DeviceSoftwareEoL
+from .models import SwitchInfo, ProbeStats,DeviceLifecycleSummary, DeviceHardwareEoL, DeviceSoftwareEoL, EndpointLocation, EndpointLocationList
 from arista.inventory.v1 import models
+from arista.endpointlocation.v1 import models as endpoint_models
 import logging
 
 RPC_TIMEOUT = 30
@@ -133,3 +134,93 @@ def convert_response_to_device_lifecycle(device) -> DeviceLifecycleSummary:
         hardware_lifecycle_summary = _hw
     )
     return(_device)
+
+def convert_response_to_endpoint_location(endpoint) -> EndpointLocation:
+    all_endpoints = []
+    all_locations = []
+    if endpoint.location_list.values:
+        location = serialize_arista_protobuf(endpoint.location_list.values[0])
+        all_locations.append(location)
+        # for _location in endpoint.location_list.values:
+        #     location = serialize_arista_protobuf(_location)
+        #     # _device_enum = _location.device_status.value
+        #     # location = EndpointLocationList(
+        #     #     serial_number = _location.device_id.value,
+        #     #     device_status = _location.device_status.enum_type.values_by_number[_device_enum].name
+        #     # )
+        #     all_locations.append(location)
+    if endpoint.identifier_list:
+        for _endpoint in endpoint.identifier_list.values:
+            match _endpoint.type:
+                case endpoint_models.IDENTIFIER_TYPE_MAC_ADDR:
+                    mac_address = convert_protobuf_value(_endpoint.value)
+                    logging.debug(f"MAC TYPE: {type(mac_address)}")
+                case endpoint_models.IDENTIFIER_TYPE_IPV4_ADDR:
+                    ip_address = convert_protobuf_value(_endpoint.value)
+                case endpoint_models.IDENTIFIER_TYPE_HOSTNAME:
+                    hostname = convert_protobuf_value(_endpoint.value)
+    all_endpoints.append(EndpointLocation(
+       hostname = hostname,
+       mac_address = mac_address,
+       ip_address = ip_address,
+       location_list = all_locations        
+    ))
+    return(all_endpoints)
+
+def serialize_arista_protobuf(pb_obj, max_depth=10, current_depth=0):
+    """Recursively serialize Arista protobuf objects to dict with enum names"""
+    if current_depth >= max_depth:
+        return str(pb_obj)
+    
+    result = {}
+    
+    try:
+        for field, value in pb_obj.ListFields():
+            field_name = field.name
+            
+            try:
+                # Handle different field types
+                if hasattr(value, 'ListFields'):  # Nested protobuf message
+                    result[field_name] = serialize_arista_protobuf(value, max_depth, current_depth + 1)
+                    
+                elif hasattr(value, '__iter__') and not isinstance(value, (str, bytes)):  # Repeated field
+                    result[field_name] = []
+                    for item in value:
+                        if hasattr(item, 'ListFields'):  # Repeated protobuf messages
+                            result[field_name].append(serialize_arista_protobuf(item, max_depth, current_depth + 1))
+                        else:
+                            result[field_name].append(convert_protobuf_value(item, field))
+                            
+                else:  # Simple field
+                    result[field_name] = convert_protobuf_value(value, field)
+                    
+            except Exception as e:
+                result[field_name] = f"<serialization_error: {str(e)}>"
+                
+    except Exception as e:
+        return {"serialization_error": str(e), "object_type": str(type(pb_obj))}
+    
+    return result
+
+def convert_protobuf_value(value, field_descriptor=None):
+    """Convert protobuf values to JSON-serializable types, preserving enum names"""
+    
+    # Check if this is an enum field
+    if field_descriptor and hasattr(field_descriptor, 'enum_type') and field_descriptor.enum_type:
+        try:
+            # Get the enum name from the descriptor
+            enum_name = field_descriptor.enum_type.values_by_number[value].name
+            return enum_name
+        except (KeyError, AttributeError):
+            # Fallback to int if enum name lookup fails
+            return value
+    
+    # Handle other types
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    elif isinstance(value, bytes):
+        return value.decode('utf-8', errors='replace')
+    elif hasattr(value, 'seconds') and hasattr(value, 'nanos'):  # Timestamp
+        return {"seconds": value.seconds, "nanos": value.nanos}
+    else:
+        return str(value)

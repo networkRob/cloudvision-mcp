@@ -47,3 +47,24 @@ class DeviceLifecycleSummary(TypedDict):
     serial_number: str
     software_eol: DeviceSoftwareEoL
     hardware_lifecycle_summary: DeviceHardwareEoL
+
+# ===================================================
+# Endpoint Location Models
+# ===================================================
+
+class EndpointLocationList(TypedDict):
+    serial_number: str
+    device_status: str
+    interface: str
+    vlan_id: int
+    learned_time: str
+    mac_type: str
+    likelihood: str
+
+class EndpointLocation(TypedDict):
+    hostname: str
+    ip_address: str
+    mac_address: str
+    location_list: list[dict]
+
+    
