@@ -39,7 +39,7 @@ The server will be running by default with Streamable HTTP on port 8000
 The server can be configured with the following flags
 | Flag | Description |
 | --- | --- |
-| -t | MCP Transport {"http", "stdio"} |
+| -t | MCP Transport {"http", "stdio"} (default=http) |
 | -p | MCP Port for Streamable HTTP (default=8000) |
 | -c | CVP Connection protocol {"grcp", "http"} (default=grpc) |
 | -d | Enable debug logging |
