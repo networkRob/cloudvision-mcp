@@ -81,3 +81,20 @@ The example client configs can work with Claude Desktop or a local Ollama LLM vi
   }
   
 ```
+
+### Streamable HTTP Server Configuration (Claude Desktop)
+```
+  {
+    "mcpServers": {
+      "CVP MCP Server": {
+        "command": "npx",
+        "args": [
+          "mcp-remote",
+          "http://<mcp_server_address>:<port>/mcp",
+          "--allow-http"
+        ]
+      }
+    }
+  }
+  
+```
