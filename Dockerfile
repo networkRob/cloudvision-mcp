@@ -8,4 +8,6 @@ WORKDIR /workspace
 
 COPY . .
 
+RUN uv sync
+
 ENTRYPOINT [ "uv", "run", "cloudvision_mcp.py" ]
